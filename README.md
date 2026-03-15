@@ -122,17 +122,6 @@ pnpm dev
 
 Frontend default URL is typically `http://localhost:3000`.
 
-## Screenshots
-
-Store screenshots in `docs/screenshots/` and reference them here.
-
-Example:
-
-```md
-![Dashboard](docs/screenshots/dashboard.png)
-![PPE Analysis](docs/screenshots/ppe-analysis.png)
-```
-
 ## Files You Should Commit
 
 - Source code in `ai_backend/` and `frontend/frontend/`
