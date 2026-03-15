@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConSafe | Attendance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='landing-font-v6') }}">
+  <style>
+    html, body, p, li, label, input, textarea, select, table, td { font-family: 'IBM Plex Sans', sans-serif !important; }
+    h1, h2, h3, h4, h5, h6, .brand-text, .section-title-row h2, .hero-panel h3 { font-family: 'Syne', sans-serif !important; }
+    .eyebrow, .mini-eval-btn, .run-btn, .download-btn, .badge, .value-pill, th, .worker-id, .worker-frames, button, .nav-links a.ppe-btn, .nav-links a.att-btn, .nav-links a.admin-btn {
+      font-family: 'DM Mono', monospace !important;
+    }
+    .nav-links a { font-family: 'IBM Plex Sans', sans-serif !important; }
+  </style>
+</head>
+<body class="has-sidebar">
+  <div class="bg-grid"></div>
+  <aside class="sidebar-nav">
+    <div class="sidebar-top">
+      <a href="{{ url_for('landing') }}" class="brand">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">ConSafe</span>
+      </a>
+    </div>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="{{ url_for('landing') }}">Home</a>
+      <a href="{{ url_for('evaluation') }}">Dashboard</a>
+      <a href="{{ url_for('attendance_page') }}">Attendance</a>
+      <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+    </nav>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch theme" title="Switch theme"><span class="theme-icon" aria-hidden="true">🌙</span></button>
+  </aside>
+
+  <main class="page with-sidebar">
+    <section class="hero reveal attendance-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Workforce Operations</p>
+        <h1>Autonomous Face Attendance</h1>
+        <p class="subtitle">Register workers once, then mark attendance from uploaded image/video using automatic face detection and matching.</p>
+      </div>
+      <div class="hero-panel">
+        <h3>Two Tasks Available</h3>
+        <ul>
+          <li>Register Worker</li>
+          <li>Mark Attendance</li>
+        </ul>
+      </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="messages reveal">
+          {% for category, message in messages %}
+            <div class="alert {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+
+    {% if not runtime_ok %}
+      <section class="alert critical reveal">{{ runtime_error }}</section>
+    {% endif %}
+
+    {% if not face_runtime_ok %}
+      <section class="alert critical reveal">{{ face_runtime_error }}</section>
+    {% endif %}
+
+    <section class="evaluation-shell reveal">
+      <div class="section-title-row">
+        <h2>Attendance Workspace</h2>
+        <a href="{{ url_for('attendance_page') }}" class="mini-eval-btn">Attendance</a>
+      </div>
+
+      <section class="panel camera-panel">
+        <h3>Live Camera</h3>
+        <p class="subnote">Start camera, then capture for Registration or Attendance from the same live frame.</p>
+        <div class="camera-stage">
+          <video id="camera-video" autoplay muted></video>
+        </div>
+        <div class="camera-actions">
+          <button class="mini-eval-btn" type="button" id="start-camera">Start Camera</button>
+          <button class="att-btn" type="button" id="stop-camera">Stop Camera</button>
+          <span id="camera-state" class="camera-state">Camera idle</span>
+        </div>
+        <canvas id="camera-canvas" class="camera-canvas" width="640" height="360"></canvas>
+      </section>
+
+      <section class="attendance-grid">
+        <section class="panel">
+          <h3>Task 1: Register Worker</h3>
+          <p class="subnote">Capture a live front-facing photo and register worker facial signature locally.</p>
+          <form id="register-form" action="{{ url_for('attendance_register') }}" method="post" enctype="multipart/form-data">
+            <label>Worker Name
+              <input type="text" name="worker_name" required placeholder="Ex: Rahul Singh">
+            </label>
+            <input type="hidden" id="register-captured-image" name="captured_image">
+            <div class="capture-row">
+              <button class="att-btn" type="button" id="capture-register">Capture For Registration</button>
+              <span id="register-capture-status" class="camera-state">No capture yet</span>
+            </div>
+            <img id="register-preview" class="capture-preview" alt="Register capture preview" hidden>
+            <button class="run-btn" type="submit">Register Worker</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <h3>Task 2: Mark Attendance</h3>
+          <p class="subnote">Capture live frame and attendance is matched automatically to registered workers.</p>
+          <form id="mark-form" action="{{ url_for('attendance_mark') }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" id="mark-captured-image" name="captured_image">
+            <div class="capture-row">
+              <button class="att-btn" type="button" id="capture-mark">Capture For Attendance</button>
+              <span id="mark-capture-status" class="camera-state">No capture yet</span>
+            </div>
+            <img id="mark-preview" class="capture-preview" alt="Mark capture preview" hidden>
+            <button class="run-btn" type="submit">Mark Attendance</button>
+          </form>
+        </section>
+      </section>
+
+      <section class="attendance-grid tables">
+        <section class="panel">
+          <h3>Registered Workers</h3>
+          {% if workers %}
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Sample Face</th>
+                <th>Attendance Count</th>
+                <th>Last Marked At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for worker in workers %}
+                <tr>
+                  <td>{{ worker.name }}</td>
+                  <td>
+                    <img
+                      class="sample-thumb"
+                      src="{{ url_for('attendance_sample_face', worker_id=worker.worker_id) }}"
+                      alt="{{ worker.name }} sample face"
+                    >
+                  </td>
+                  <td>{{ worker.attendance_count }}</td>
+                  <td>{{ worker.last_marked_at }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+            <p class="empty">No workers registered yet.</p>
+          {% endif %}
+        </section>
+
+        <section class="panel">
+          <h3>Recent Attendance Events</h3>
+          {% if events %}
+          <table>
+            <thead>
+              <tr>
+                <th>Worker</th>
+                <th>Time</th>
+                <th>Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+                <tr>
+                  <td>{{ event.name }}</td>
+                  <td>{{ event.time }}</td>
+                  <td>{{ event.source }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+            <p class="empty">No attendance events yet.</p>
+          {% endif %}
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+</body>
+</html>

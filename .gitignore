@@ -1,0 +1,79 @@
+# ------------------------------
+# OS / Editor
+# ------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ------------------------------
+# Environment / Secrets
+# ------------------------------
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# ------------------------------
+# Python
+# ------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.venv/
+venv/
+env/
+
+# ------------------------------
+# Node / Next.js
+# ------------------------------
+node_modules/
+.pnpm-store/
+.npm/
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ------------------------------
+# Project-specific generated files
+# ------------------------------
+ai_backend/output_annotated*.mp4
+ai_backend/local_data/
+ai_backend/Face Verification/data/backups/
+ai_backend/Face Verification/data/images/
+ai_backend/Face Verification/data/*.pickle
+ai_backend/Face Verification/data/attendance.json
+ai_backend/.vscode/Face Verification/
+frontend/frontend/build_output.txt
+
+# Keep model weights if you want reproducible local runs.
+# Uncomment to ignore model weights:
+# ai_backend/*.pt

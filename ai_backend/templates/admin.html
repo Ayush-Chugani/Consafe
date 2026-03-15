@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConSafe | Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css', v='landing-font-v6') }}">
+  <style>
+    html, body, p, li, label, input, textarea, select, table, td { font-family: 'IBM Plex Sans', sans-serif !important; }
+    h1, h2, h3, h4, h5, h6, .brand-text, .section-title-row h2, .hero-panel h3 { font-family: 'Syne', sans-serif !important; }
+    .eyebrow, .mini-eval-btn, .run-btn, .download-btn, .badge, .value-pill, th, .worker-id, .worker-frames, button, .nav-links a.ppe-btn, .nav-links a.att-btn, .nav-links a.admin-btn {
+      font-family: 'DM Mono', monospace !important;
+    }
+    .nav-links a { font-family: 'IBM Plex Sans', sans-serif !important; }
+  </style>
+</head>
+<body class="has-sidebar">
+  <div class="bg-grid"></div>
+  <aside class="sidebar-nav">
+    <div class="sidebar-top">
+      <a href="{{ url_for('landing') }}" class="brand">
+        <span class="brand-mark">C</span>
+        <span class="brand-text">ConSafe</span>
+      </a>
+    </div>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="{{ url_for('landing') }}">Home</a>
+      <a href="{{ url_for('evaluation') }}">Dashboard</a>
+      <a href="{{ url_for('attendance_page') }}">Attendance</a>
+      <a href="{{ url_for('admin_dashboard') }}">Admin</a>
+    </nav>
+    <button type="button" class="theme-toggle" data-theme-toggle aria-label="Switch theme" title="Switch theme"><span class="theme-icon" aria-hidden="true">🌙</span></button>
+  </aside>
+
+  <main class="page with-sidebar admin-page">
+    <section class="hero reveal admin-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Admin Command Center</p>
+        <h1>Workforce Intelligence Dashboard</h1>
+        <p class="subtitle">Monitor workers, attendance, PPE compliance, and risk trends in one executive view.</p>
+      </div>
+      <div class="hero-panel">
+        <h3>Live Dashboard Scope</h3>
+        <ul>
+          <li>Attendance and worker productivity trend</li>
+          <li>PPE detections and class distribution</li>
+          <li>Risk insights and actionable worker summary</li>
+        </ul>
+      </div>
+    </section>
+
+    {% if not runtime_ok %}
+      <section class="alert critical reveal">{{ runtime_error }}</section>
+    {% endif %}
+
+    {% if not face_runtime_ok %}
+      <section class="alert critical reveal">{{ face_runtime_error }}</section>
+    {% endif %}
+
+    <section class="evaluation-shell reveal">
+      <div class="section-title-row">
+        <h2>Operational KPIs</h2>
+      </div>
+
+      <section class="admin-kpi-grid">
+        <article class="admin-kpi-card">
+          <h4>Total Workers</h4>
+          <p>{{ dashboard_data.kpis.total_workers }}</p>
+        </article>
+        <article class="admin-kpi-card">
+          <h4>Attendance Events</h4>
+          <p>{{ dashboard_data.kpis.attendance_events }}</p>
+        </article>
+        <article class="admin-kpi-card">
+          <h4>Completed Jobs</h4>
+          <p>{{ dashboard_data.kpis.completed_jobs }}</p>
+        </article>
+        <article class="admin-kpi-card">
+          <h4>Active Jobs</h4>
+          <p>{{ dashboard_data.kpis.active_jobs }}</p>
+        </article>
+        <article class="admin-kpi-card">
+          <h4>Failed Jobs</h4>
+          <p>{{ dashboard_data.kpis.failed_jobs }}</p>
+        </article>
+        <article class="admin-kpi-card">
+          <h4>Reports Available</h4>
+          <p>{{ dashboard_data.kpis.downloadable_reports }}</p>
+        </article>
+      </section>
+
+      <section class="admin-chart-grid">
+        <section class="panel admin-chart-panel">
+          <h3>Attendance Trend (14 Days)</h3>
+          <canvas id="attendanceTrendChart" height="140"></canvas>
+        </section>
+        <section class="panel admin-chart-panel">
+          <h3>Event Source Distribution</h3>
+          <canvas id="sourceDistributionChart" height="140"></canvas>
+        </section>
+        <section class="panel admin-chart-panel">
+          <h3>PPE Detection Class Counts</h3>
+          <canvas id="classCountChart" height="140"></canvas>
+        </section>
+        <section class="panel admin-chart-panel">
+          <h3>Risk Level Distribution</h3>
+          <canvas id="riskDistributionChart" height="140"></canvas>
+        </section>
+      </section>
+
+      <section class="admin-table-grid">
+        <section class="panel">
+          <h3>Top Workers By Attendance</h3>
+          {% if dashboard_data.top_workers %}
+          <table>
+            <thead>
+              <tr>
+                <th>Worker</th>
+                <th>Attendance Count</th>
+                <th>Last Marked At</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for worker in dashboard_data.top_workers %}
+              <tr>
+                <td>{{ worker.name }}</td>
+                <td>{{ worker.attendance_count }}</td>
+                <td>{{ worker.last_marked_at }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="empty">No worker records available yet.</p>
+          {% endif %}
+        </section>
+
+        <section class="panel">
+          <h3>Latest Worker PPE Summary</h3>
+          {% if dashboard_data.latest_worker_summary %}
+          <table>
+            <thead>
+              <tr>
+                <th>Worker</th>
+                <th>Missing Items</th>
+                <th>Frames Seen</th>
+                <th>Missing Events</th>
+                <th>Accuracy %</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in dashboard_data.latest_worker_summary %}
+              <tr>
+                <td>{{ row.worker }}</td>
+                <td>{{ row.missing_items }}</td>
+                <td>{{ row.frames_seen }}</td>
+                <td>{{ row.missing_events }}</td>
+                <td>{{ row.detection_accuracy_percent }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="empty">No PPE analysis summary available yet. Run a detection job first.</p>
+          {% endif %}
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script id="admin-data" type="application/json">{{ dashboard_data|tojson }}</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
